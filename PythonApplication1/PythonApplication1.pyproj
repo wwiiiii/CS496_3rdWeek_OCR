@@ -22,10 +22,16 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="distort.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="grammar.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="imgmodule.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="module1.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PythonApplication1.py" />

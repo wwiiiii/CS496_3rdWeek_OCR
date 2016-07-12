@@ -1,4 +1,5 @@
 from PIL import Image
+from distort import *
 import Queue
 import time
 import numpy as np
@@ -124,47 +125,22 @@ def ImageRemoveBg(img, rt,gt,bt):
 
 def bfs(img, i, j):
     imgpx = img.load(); q = Queue.Queue()
-    data = np.asarrag(img); data = np.transpose(data, (1,0,2))
     width, height = img.size
     q.put([i,j])
+    ddx = [1,-1,0,0]; ddy = [0,0,1,-1]
     while not q.empty():
         now = q.get(); 
         r,g,b = imgpx[now[0],now[1]];
         while r==255 and g==255 and b==255 and not q.empty():
             now = q.get(); r,g,b = imgpx[now[0],now[1]];
         if r==255 and g==255 and b==255: continue;
-        for dx in [-1,0,1]:
-            for dy in [-1,0,1]:
-                if now[0]+dx <0 or now[0]+dx>=width or now[1]+dy<0 or now[1]+dy>=height: continue
-                r1,g1,b1 = imgpx[now[0]+dx, now[1]+dy]
-                if isSame(r,g,b,r1,g1,b1):
-                    q.put([i+dx,j+dy])
+        for i in range(4):
+            dx = ddx[i]; dy =ddy[i];
+            if now[0]+dx <0 or now[0]+dx>=width or now[1]+dy<0 or now[1]+dy>=height: continue
+            r1,g1,b1 = imgpx[now[0]+dx, now[1]+dy]
+            if isSame(r,g,b,r1,g1,b1):
+                q.put([i+dx,j+dy])
         imgpx[now[0], now[1]] = (255,255,255)
-
-def bfsnp(img, ii, jj):
-    #np.seterr(over='ignore')
-    data = np.asarray(img); q = Queue.Queue()
-    data.setflags(write=True)
-    data = np.transpose(data, (1,0,2))
-    width, height = img.size
-    q.put([ii,jj])
-    while not q.empty():
-        now = q.get(); i,j = now[0], now[1]
-        r,g,b = data[i][j][0], data[i][j][1], data[i][j][2];
-        while r==255 and g==255 and b==255 and not q.empty():
-            now = q.get(); i,j= now[0],now[1];r,g,b = data[i][j][0], data[i][j][1], data[i][j][2];
-        if r==255 and g==255 and b==255: continue;
-        #print r,g,b
-        for dx in [-1,0,1]:
-            for dy in [-1,0,1]:
-                if now[0]+dx <0 or now[0]+dx>=width or now[1]+dy<0 or now[1]+dy>=height: continue
-                r1,g1,b1 = data[i+dx][j+dy][0], data[i+dx][j+dy][1], data[i+dx][j+dy][2];
-                if isSame(r,g,b,r1,g1,b1):
-                    q.put([i+dx,j+dy])
-        data[i][j] = [255,255,255]
-    data = np.transpose(data, (1,0,2))
-    img = Image.fromarray(data);
-    return img
 
 def ImageRemoveBgBfs(img, rt,gt,bt):
     imgpx = img.load()
@@ -174,7 +150,9 @@ def ImageRemoveBgBfs(img, rt,gt,bt):
         for j in range(1,height-1):
             r, g, b = imgpx[i,j]
             if isSame(r,g,b,rt,gt,bt):
+                t1 = time.time()
                 bfs(img,i,j)
+                #print 'bfs : ' + str(time.time()-t1)
     return img
     
 
@@ -190,15 +168,52 @@ def ImageReinforce(img):
                 for dx in [-1,0,1]:
                     for dy in [-1,0,1]:
                         chk[i+dx][j+dy] += 1
-    for i in range(1,width-1):
-        for j in range(1,height-1):
+    i = 1;
+    while i < width-1:
+        j = 1;
+        while j < height-1:
             if chk[i][j] >= 4:
                 imgpx[i,j] = (0,0,0)
+            j+=1
+        i+=1
+
+def ImageRemoveBgMedian(img,colorList):
+    imgpx = img.load(); width, height = img.size
+    list = [];
+    for r,g,b,c in colorList:
+        list.append(r+g+b)
+    list.sort()
+    if len(list) > 2: threshold = (list[1] + list[2])/2;
+    else: threshold = (list[0] + list[1])/2;
+    for i in range(width):
+        for j in range(height):
+            r,g,b = imgpx[i,j];
+            if r+g+b > threshold: imgpx[i,j] = (255,255,255)
+            elif r+g+b < threshold: imgpx[i,j]=(0,0,0)
+    return img
+
+
+def MedianFilter(img):
+    newimg = Image.new('RGB', img.size, "white")
+    newpx = newimg.load(); imgpx = img.load()
+    width, height = img.size
+    for i in range(1,width-1):
+        for j in range(1,height-1):
+            pixlist = []
+            for dx in [-1,0,1]:
+                for dy in [-1,0,1]:
+                    r,g,b = imgpx[i,j];
+                    pixlist.append([(r,g,b),r+g+b])
+            sorted(pixlist, key=lambda a:a[1])
+            newpx[i,j] = pixlist[3][0]
+    return newimg
+
 
 def ImagePreprocessing(img):
     imgpx = img.load();
     width, height = img.size
     colorList = []
+    t1=time.time()
     for i in range(width):
         for j in range(height):
             r, g, b = imgpx[i,j]
@@ -211,19 +226,34 @@ def ImagePreprocessing(img):
         timg = Image.new('RGB',(100,100),(r,g,b))
         timg.save(path+'color'+str(cnt)+'.bmp')
     print colorList
-    t1 = time.time()
-    img = ImageRemoveBgBfs(img, colorList[0][0], colorList[0][1], colorList[0][2]);img.show()
-    print time.time() - t1
-    #img = ImageFilter(img, [[0,1,0],[1,+5,1],[0,1,0]], 9); img.show()#blur 1
-    img = Contrast(img, 20); img.show()
+    print 'list', time.time() - t1;t1 = time.time()
+    # first route : bgmedian => blur => binary => reinforce
+    # second route : bgbfs => binary => reinforce
+    FAST = True
+    if FAST == True:
+        img = ImageRemoveBgMedian(img,colorList); #img.show()
+        print 'median', time.time() - t1; t1 = time.time()
+        #img = MedianFilter(img); img.show()
+        print 'filter', time.time() - t1;t1 = time.time()
+    else:
+        img = ImageRemoveBgBfs(img, colorList[0][0], colorList[0][1], colorList[0][2]); #img.show()
+        print 'bgbfs', time.time() - t1;t1 = time.time()
+    #img = Contrast(img, 20); img.show()
+    print 'contra', time.time() - t1; t1 = time.time()
     #img = Extract(img,0,0,0); img.show()#onlyB filter
-    img = Binary(img); img.show()#B/W filter
-    for i in range(3):
-        ImageReinforce(img);img.show()
-    img.show()
+    img = Binary(img); #img.show()#B/W filter
+    print 'binary', time.time() - t1;t1 = time.time()
+    if FAST == True:
+        for i in range(5):
+            ImageReinforce(img);#img.show()
+    else:
+        for i in range(3):
+            ImageReinforce(img);#img.show()
+    print 'reinf', time.time() - t1;t1 = time.time()
+    #img.show()
     #img = ImageFilter(img, [[0,-2,0],[-2,+11,-2],[0,-2,0]], 3); img.show()#sharpen 1
     #img = ImageFilter(img, [[0,-1,0],[-1,+5,-1],[0,-1,0]], 1); img.show()#sharpen 2
-    
+    findBoundary(img)
     return img
 
 
