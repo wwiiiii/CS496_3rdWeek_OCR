@@ -179,6 +179,7 @@ def MedianFilterGray(img):
     return newimg
 
 def ImagePreprocessing2(img):
+    print 'now on 2'
     img = img.convert('L')
     imgpx = img.load();
     width, height = img.size
@@ -193,35 +194,30 @@ def ImagePreprocessing2(img):
     print 'list', time.time() - t1;t1 = time.time()
     # first route : bgmedian => blur => binary => reinforce
     # second route : bgbfs => binary => reinforce
-    FAST = False
-    if FAST == True:
-        img = ImageRemoveBgMedian(img,colorList); img.show()
-        print 'median', time.time() - t1; t1 = time.time()
-        img = MedianFilter(img); img.show()
-        print 'filter', time.time() - t1;t1 = time.time()
-    else:
-        img = ImageRemoveBgBfs(img, colorList[0][0]); img.show()
-        print 'bgbfs', time.time() - t1;t1 = time.time()
+    img = ImageRemoveBgBfs(img, colorList[0][0]); #img.show()
+    print 'bgbfs', time.time() - t1;t1 = time.time()
+    #img = MedianFilterGray(img); #img.show()
+    print 'filter', time.time() - t1;t1 = time.time()
     #img = Contrast(img, 20); img.show()
     print 'contra', time.time() - t1; t1 = time.time()
     #img = Extract(img,0,0,0); img.show()#onlyB filter
-    img = Binary(img); img.show()#B/W filter
+    img = Binary(img); #img.show()#B/W filter
     print 'binary', time.time() - t1;t1 = time.time()
-    if FAST == True:
-        for i in range(5):
-            ImageReinforce(img);#img.show()
-    else:
-        for i in range(1):
-            ImageReinforce(img);#img.show()
+    for i in range(0):
+        img = MedianFilterGray(img); 
+    for i in range(0):
+        ImageReinforce(img);
     print 'reinf', time.time() - t1;t1 = time.time()
-    img.show()
+    #img.show()
     #img = ImageFilter(img, [[0,-2,0],[-2,+11,-2],[0,-2,0]], 3); img.show()#sharpen 1
     #img = ImageFilter(img, [[0,-1,0],[-1,+5,-1],[0,-1,0]], 1); img.show()#sharpen 2
-    findBoundary(img.convert('RGB'))
+    #findBoundary(img.convert('RGB'))
     return img
 
 
-def ImagePreprocessing(img):
+def ImagePreprocessing(img, autoRotate):
+    if autoRotate==2:
+        return ImagePreprocessing2(img)
     img = img.convert('L')
     width, height = img.size; imgpx = img.load()
     #Contrast Stretching
@@ -259,10 +255,11 @@ def ImagePreprocessing(img):
             if a < nowmean: imgpx[i,j] = 0
             else : imgpx[i,j] = 255
     #img.show()
-    for i in range(0):
-        img = ImageFilter(img, [[1,1,1],[1,1,1],[1,1,1]], 9); img.show()#blur 1
-    #img = MedianFilterGray(img)
-    img = Binary(img); img.show()
+    if autoRotate == 2:
+        for i in range(2):
+            img = ImageFilter(img, [[1,1,1],[1,1,1],[1,1,1]], 9);# img.show()#blur 1
+	#img = MedianFilterGray(img)
+    img = Binary(img);# img.show()
     #img = ImageFilter(img, [[0,-2,0],[-2,+11,-2],[0,-2,0]], 3); img.show()#sharpen 1
     '''for i in range(5):
         img = MedianFilterGray(img); 
@@ -270,12 +267,13 @@ def ImagePreprocessing(img):
     for i in range(3):
             ImageReinforce(img);#img.show()
     img.show()'''
-    img = findBoundary(img.convert('RGB')).convert('L');
-    img = MedianFilterGray(img);
-    img = Binary(img);
+    if(autoRotate == 1):
+        img = findBoundary(img.convert('RGB')).convert('L');
+        img = MedianFilterGray(img);
+        img = Binary(img);
     #closing(opening(img)).show()
     #return closing(img)
-    img.show()
+  #  img.show()
     return img
 #http://bimage.interpark.com/milti/renewPark/evtboard/20110623131612851.jpg
 

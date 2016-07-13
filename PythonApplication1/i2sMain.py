@@ -14,12 +14,17 @@ maxdiff = 115
 flag = True
 output_file_path = 'C:\Users\q\Documents\Visual Studio 2015\Projects\PythonApplication1\PythonApplication1\\temp'
 input_file_name_base = 'imgtemp'
-
+UPLOAD_FOLDER ='C:\Users\q\Documents\Visual Studio 2015\Projects\PythonApplication1\PythonApplication1\upload'
   
 def getImageByPath(path):#path is url
     url = path
-    r = requests.get(url)
-    i = Image.open(StringIO(r.content))
+    print 'opening image by path'
+    if path.find('myfile:') != -1:
+        url = path[7:];
+        i = Image.open(UPLOAD_FOLDER + '\\\\' + url)
+    else:
+        r = requests.get(url)
+        i = Image.open(StringIO(r.content))
     return i
 
 
@@ -79,9 +84,9 @@ def main():
         print 'text is ' + ans"""
 
 
-def i2sWrapper(imgpath, lang):
+def i2sWrapper(imgpath, lang, autoRotate):
     img = getImageByPath(imgpath)#Image.open('C:\Users\q\Pictures\\' + 'mysam_' + str(i) + '.jpg')
-    img = ImagePreprocessing(img)
+    img = ImagePreprocessing(img, autoRotate)
     if lang == 'kor':ans = unicode(ImageToString(img.convert('RGB'), 'kor','6'), 'utf-8').replace('<br>',"\n")
     else : ans = ImageToString(img.convert('RGB'), 'eng','6').replace('',"")
     if lang == 'kor':correctGrammar(ans)

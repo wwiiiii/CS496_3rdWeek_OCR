@@ -47,6 +47,7 @@
     <Content Include="templates\main.html" />
     <Content Include="templates\noteshow.html" />
     <Content Include="templates\notescan.html" />
+    <Content Include="templates\upload.html" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="static\" />

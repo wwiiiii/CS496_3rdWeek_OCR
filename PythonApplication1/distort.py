@@ -32,7 +32,7 @@ def findBoundary(img):#img should be b/w
         points.append([hullX[i],hullY[i]])
     points = np.array(points)
     hullPoints = findHull(hullX, hullY)
-    asdf = Image.new('RGB', img.size, "white"); ImageDraw.Draw(asdf).line(hullPoints,fill=128,width=10); asdf = asdf.convert('L'); asdf.show()
+    asdf = Image.new('RGB', img.size, "white"); ImageDraw.Draw(asdf).line(hullPoints,fill=128,width=10); asdf = asdf.convert('L');# asdf.show()
     #print len(left)+len(right) , len(hullPoints)
     
     #img.show()
@@ -45,7 +45,7 @@ def findBoundary(img):#img should be b/w
     for i in points:
         rec.append((int(i[0]),int(i[1])))
     ImageDraw.Draw(asdf).line(rec, fill = 128, width = 3)
-    asdf.show()
+    #asdf.show()
     lu = [width, 0]; ru = [0,0]; ld = [0, height]; rd = [0, 0];
     rec.sort()#sorted(rec, key=lambda aaa:aaa[0], reverse=True)
     print rec
