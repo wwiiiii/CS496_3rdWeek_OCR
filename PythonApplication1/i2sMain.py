@@ -1,5 +1,5 @@
 #-*- coding: utf-8 -*-
-import sys
+import sys, os
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -45,6 +45,7 @@ def ImageToString(img, lang, psm):
     p1 = i2s(img,lang,psm)
     p1.wait();
     f = open('temp.txt'); rstr = f.read().strip(); f.close()
+    os.remove('temp.txt')
     return rstr
 
 
@@ -76,7 +77,17 @@ def main():
         print 'time is ' + str(time.time()-t1)
         print 'text is ' + ans"""
 
+
+def i2sWrapper(imgpath, lang):
+    img = getImageByPath(imgpath)#Image.open('C:\Users\q\Pictures\\' + 'mysam_' + str(i) + '.jpg')
+    img = ImagePreprocessing(img)
+    if lang == 'kor':ans = unicode(ImageToString(img.convert('RGB'), 'kor','6'), 'utf-8').replace('<br>',"\n")
+    else : ans = ImageToString(img.convert('RGB'), 'eng','6').replace('',"")
+    if lang == 'kor':correctGrammar(ans)
+    print ''
+    return ans
+'''
 if __name__=='__main__':
     test()#main()
 else:
-    test()#main()
+    test()#main()'''

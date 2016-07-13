@@ -1,0 +1,11 @@
+﻿{% extends "layout.html" %}
+{% block content %}
+<div class="jumbo">
+    <form method="post" action="/notecalc">
+        <h3><strong>이미지의 URL과 언어를 입력하세요(kor/eng)</strong></h3>
+        <input type="text" name="imgpath" placeholder="이미지주소">
+        <input type="text" name="lang" placeholder="언어">
+        <button type="submit">전송!</button>
+    </form>
+</div>
+{% endblock %}

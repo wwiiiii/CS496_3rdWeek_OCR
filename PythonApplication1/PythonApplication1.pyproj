@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>93196a49-743a-43c1-8f3d-432d7e5664fa</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>PythonApplication1.py</StartupFile>
+    <StartupFile>index.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -34,13 +34,25 @@
     <Compile Include="imgmodulegray.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="index.py" />
     <Compile Include="module1.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="PythonApplication1.py" />
+    <Compile Include="i2sMain.py" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="static\css\main.css" />
     <Content Include="temp.txt" />
+    <Content Include="templates\about.html" />
+    <Content Include="templates\home.html" />
+    <Content Include="templates\layout.html" />
+    <Content Include="templates\main.html" />
+    <Content Include="templates\notescan.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="static\" />
+    <Folder Include="static\css\" />
+    <Folder Include="templates\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
