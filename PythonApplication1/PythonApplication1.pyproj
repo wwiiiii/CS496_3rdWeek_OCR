@@ -31,6 +31,9 @@
     <Compile Include="imgmodule.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="imgmodulegray.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="module1.py">
       <SubType>Code</SubType>
     </Compile>

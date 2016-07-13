@@ -5,7 +5,7 @@ sys.setdefaultencoding('utf-8')
 
 from PIL import Image
 from StringIO import StringIO
-from imgmodule import *
+from imgmodulegray import *
 from grammar import *
 import subprocess, time, Queue, requests
 dx = [1,-1,0,0]
@@ -55,8 +55,8 @@ def test():
         img = ImagePreprocessing(img)
         lang = 'eng'
         for j in range(11):
-            if lang == 'kor':ans = unicode(ImageToString(img.convert('RGB'), 'kor',str(j)), 'utf-8').replace('\n'," ")
-            else : ans = ImageToString(img.convert('RGB'), 'eng',str(j)).replace('\n'," ")
+            if lang == 'kor':ans = unicode(ImageToString(img.convert('RGB'), 'kor',str(j)), 'utf-8').replace('<br>',"\n")
+            else : ans = ImageToString(img.convert('RGB'), 'eng',str(j)).replace('',"")
             print str(j)+': '+ ans
             if lang == 'kor':print str(j)+': '+correctGrammar(ans)
             print ''

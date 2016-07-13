@@ -1,5 +1,6 @@
 from PIL import Image
 from distort import *
+from bisect import *
 import Queue
 import time
 import numpy as np
@@ -8,34 +9,21 @@ black = (255,255,255)
 maxdiff = 100
 path = 'C:\Users\q\Desktop\ocrtemp\\'
 
-def isSame(a,b,c,d,e,f):
+def isSame(a,b,c,d,e,f,mydiff = maxdiff):
     diff = abs(a-d) + abs(b-e) + abs(c-f)
-    return diff < maxdiff
+    return diff < mydiff
 
 def isSameTuple(p1,p2):
     a,b,c = p1; d,e,f = p2
     return isSame(a,b,c,d,e,f)
 
 def addColor(colorList,r,g,b):
-    """if len(colorList) == 0:
-        colorList.append((r,g,b,1))
-        return"""
     for i in range(len(colorList)):
         r1,g1,b1,cnt1 = colorList[i][0], colorList[i][1],colorList[i][2],colorList[i][3]
         if isSame(r1,g1,b1,r,g,b):
             colorList[i] = [r1,g1,b1,cnt1+1]
             return
     colorList.append([r,g,b,1])
-
-
-def ImageSubtract(img, (r0,g0,b0)):
-    imgpx = img.load()
-    width, height = img.size
-    for i in range(width):
-        for j in range(height):
-            r,g,b = imgpx[i,j]
-            r += 255-r0; g+= 255-g0; b+=255-b0;
-            imgpx[i,j]= (min(r,255),min(g,255),min(b,255))
 
 def ft(a):
     return max(0,min(255,a))
@@ -93,11 +81,6 @@ def Contrast(img, GRAD):
                 for dy in [-1,0,1]:
                     r2,g2,b2 = imgpx[i+dx,j+dy]
                     if isSame(r,g,b,r2,g2,b2): continue
-                    '''if r+g+b > r2+g2+b2:
-                        r1+=GRAD;g1+=GRAD;b1+=GRAD;r2-=GRAD;g2-=GRAD;b2-=GRAD;
-                    elif r+g+b < r2+g2+b2:
-                        r1-=GRAD;g1-=GRAD;b1-=GRAD;r2+=GRAD;g2+=GRAD;b2+=GRAD;
-                    imgpx[i+dx,j+dy]=(ft(r2),ft(g2),ft(b2))'''
                     if r-r2 >= THRES and g-g2>=THRES and b-b2>=THRES:
                         imgpx[i+dx,j+dy] = (0,0,0)
                         r1,g1,b1 = 255,255,255
@@ -123,6 +106,9 @@ def ImageRemoveBg(img, rt,gt,bt):
             if chk[i][j] == 9:
                 imgpx[i,j] = (255,255,255)
 
+bfsdiff = 80
+
+
 def bfs(img, i, j):
     imgpx = img.load(); q = Queue.Queue()
     width, height = img.size
@@ -138,7 +124,7 @@ def bfs(img, i, j):
             dx = ddx[i]; dy =ddy[i];
             if now[0]+dx <0 or now[0]+dx>=width or now[1]+dy<0 or now[1]+dy>=height: continue
             r1,g1,b1 = imgpx[now[0]+dx, now[1]+dy]
-            if isSame(r,g,b,r1,g1,b1):
+            if isSame(r,g,b,r1,g1,b1,bfsdiff):
                 q.put([i+dx,j+dy])
         imgpx[now[0], now[1]] = (255,255,255)
 
@@ -149,7 +135,7 @@ def ImageRemoveBgBfs(img, rt,gt,bt):
     for i in range(1,width-1):
         for j in range(1,height-1):
             r, g, b = imgpx[i,j]
-            if isSame(r,g,b,rt,gt,bt):
+            if isSame(r,g,b,rt,gt,bt,bfsdiff):
                 t1 = time.time()
                 bfs(img,i,j)
                 #print 'bfs : ' + str(time.time()-t1)
@@ -192,7 +178,25 @@ def ImageRemoveBgMedian(img,colorList):
             elif r+g+b < threshold: imgpx[i,j]=(0,0,0)
     return img
 
-
+def ImageReinforceGray(img):
+    imgpx = img.load();
+    width, height = img.size
+    chk = [[0 for col in range(height)] for row in range(width)]
+    for i in range(1,width-1):
+        for j in range(1,height-1):
+            a = imgpx[i,j]
+            if a == 0:
+                for dx in [-1,0,1]:
+                    for dy in [-1,0,1]:
+                        chk[i+dx][j+dy] += 1
+    i = 1;
+    while i < width-1:
+        j = 1;
+        while j < height-1:
+            if chk[i][j] >= 4:
+                imgpx[i,j] = 0
+            j+=1
+        i+=1
 def MedianFilter(img):
     newimg = Image.new('RGB', img.size, "white")
     newpx = newimg.load(); imgpx = img.load()
@@ -208,8 +212,21 @@ def MedianFilter(img):
             newpx[i,j] = pixlist[3][0]
     return newimg
 
+def MedianFilterGray(img):
+    newimg = Image.new('L', img.size, 255)
+    newpx = newimg.load(); imgpx = img.load()
+    width, height = img.size
+    for i in range(1,width-1):
+        for j in range(1,height-1):
+            pixlist = []
+            for dx in [-1,0,1]:
+                for dy in [-1,0,1]:
+                    pixlist.append(imgpx[i+dx,j+dy])
+            pixlist.sort()
+            newpx[i,j] = pixlist[4]
+    return newimg
 
-def ImagePreprocessing(img):
+def ImagePreprocessing2(img):
     imgpx = img.load();
     width, height = img.size
     colorList = []
@@ -229,32 +246,78 @@ def ImagePreprocessing(img):
     print 'list', time.time() - t1;t1 = time.time()
     # first route : bgmedian => blur => binary => reinforce
     # second route : bgbfs => binary => reinforce
-    FAST = True
+    FAST = False
     if FAST == True:
-        img = ImageRemoveBgMedian(img,colorList); #img.show()
+        img = ImageRemoveBgMedian(img,colorList); img.show()
         print 'median', time.time() - t1; t1 = time.time()
-        #img = MedianFilter(img); img.show()
+        img = MedianFilter(img); img.show()
         print 'filter', time.time() - t1;t1 = time.time()
     else:
-        img = ImageRemoveBgBfs(img, colorList[0][0], colorList[0][1], colorList[0][2]); #img.show()
+        img = ImageRemoveBgBfs(img, colorList[0][0], colorList[0][1], colorList[0][2]); img.show()
         print 'bgbfs', time.time() - t1;t1 = time.time()
     #img = Contrast(img, 20); img.show()
     print 'contra', time.time() - t1; t1 = time.time()
     #img = Extract(img,0,0,0); img.show()#onlyB filter
-    img = Binary(img); #img.show()#B/W filter
+    img = Binary(img); img.show()#B/W filter
     print 'binary', time.time() - t1;t1 = time.time()
     if FAST == True:
         for i in range(5):
             ImageReinforce(img);#img.show()
     else:
-        for i in range(3):
+        for i in range(1):
             ImageReinforce(img);#img.show()
     print 'reinf', time.time() - t1;t1 = time.time()
-    #img.show()
+    img.show()
     #img = ImageFilter(img, [[0,-2,0],[-2,+11,-2],[0,-2,0]], 3); img.show()#sharpen 1
     #img = ImageFilter(img, [[0,-1,0],[-1,+5,-1],[0,-1,0]], 1); img.show()#sharpen 2
     findBoundary(img)
     return img
 
 
+def ImagePreprocessing(img):
+    img = img.convert('L')
+    width, height = img.size; imgpx = img.load()
+    #Contrast Stretching
+    maxpx = 0; minpx = 255; pixlist = range(width * (height+1)); pixcnt = 0;
+    for i in range(width):
+        for j in range(height):
+            a = imgpx[i,j]
+            if maxpx < a: maxpx = a
+            if minpx > a: minpx = a
+    for i in range(width):
+        for j in range(height):
+            a = imgpx[i,j]
+            a = int((255.0/(maxpx-minpx)) * (a - minpx))
+            pixlist[pixcnt] = a; pixcnt += 1;
+            imgpx[i,j] = a
+    pixlist = pixlist[:pixcnt]; pixlist.sort();
+    print pixlist[len(pixlist)-1]
+    sumpix = range(len(pixlist)); sumpix[0] = pixlist[0]; 
+    for i in range(1,len(pixlist)): sumpix[i] = sumpix[i-1] + pixlist[i];
+    prevmean = 0; nowmean = 0; pivot = len(pixlist)/2;
+    for i in range(100000):#while True:
+        print nowmean
+        smallmean = sumpix[pivot] / pivot;
+        bigmean = sumpix[len(pixlist)-1] - sumpix[pivot]
+        bigmean /= len(pixlist)-1 - pivot
+        nowmean = (smallmean + bigmean) / 2.0
+        print smallmean, bigmean, nowmean
+        if nowmean == prevmean: break
+        prevmean = nowmean;
+        pivot = bisect_left(pixlist, nowmean)
+    #nowmean += 20
+    for i in range(width):
+        for j in range(height):
+            a = imgpx[i,j]
+            if a < nowmean: imgpx[i,j] = 0
+            else : imgpx[i,j] = 255
+    img.show()
+    '''for i in range(10):
+        img = MedianFilterGray(img); 
+    img.show()
+    for i in range(3):
+            ImageReinforceGray(img);#img.show()
+    img.show()'''
+    #findBoundary(img.convert('RGB'))
+    return img
 #http://bimage.interpark.com/milti/renewPark/evtboard/20110623131612851.jpg
