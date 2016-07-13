@@ -1,0 +1,14 @@
+﻿{% extends "layout.html" %}
+{% block content %}
+<div class="jumbo">
+    
+    {%- for line in resultstr -%}
+    {{ line }}
+    {%- if not loop.last -%}
+    <br />
+    {%- endif -%}
+    {%- endfor -%}
+    <div align="right"><img src={{imgpath}} align="middle" hspace="5" vspace="5"></div>
+    
+</div>
+{% endblock %}

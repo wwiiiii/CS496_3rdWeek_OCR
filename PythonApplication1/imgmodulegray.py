@@ -270,9 +270,12 @@ def ImagePreprocessing(img):
     for i in range(3):
             ImageReinforce(img);#img.show()
     img.show()'''
-    #findBoundary(img.convert('RGB'))
+    img = findBoundary(img.convert('RGB')).convert('L');
+    img = MedianFilterGray(img);
+    img = Binary(img);
     #closing(opening(img)).show()
     #return closing(img)
+    img.show()
     return img
 #http://bimage.interpark.com/milti/renewPark/evtboard/20110623131612851.jpg
 

@@ -12,7 +12,7 @@ dx = [1,-1,0,0]
 dy = [0,0,1,-1]
 maxdiff = 115
 flag = True
-output_file_name = 'temp'
+output_file_path = 'C:\Users\q\Documents\Visual Studio 2015\Projects\PythonApplication1\PythonApplication1\\temp'
 input_file_name_base = 'imgtemp'
 
   
@@ -26,8 +26,8 @@ def getImageByPath(path):#path is url
 def i2s(img,lang,psm):
     input_file_name = 'C:\Users\q\Desktop\ocrtemp\\' + 'imgtemp' +'.bmp'
     img.save(input_file_name,'bmp')
-    if lang == 'kor':command = ['C:\Program Files (x86)\Tesseract-OCR\\tesseract',input_file_name,'temp','-psm', psm, '-l',lang,'onlykor']#4,6,7,8
-    elif lang == 'eng':command = ['C:\Program Files (x86)\Tesseract-OCR\\tesseract',input_file_name,'temp','-psm', psm, '-l',lang,'onlyeng']#4,6,7,8
+    if lang == 'kor':command = ['C:\Program Files (x86)\Tesseract-OCR\\tesseract',input_file_name,output_file_path,'-psm', psm, '-l',lang,'onlykor']#4,6,7,8
+    elif lang == 'eng':command = ['C:\Program Files (x86)\Tesseract-OCR\\tesseract',input_file_name,output_file_path,'-psm', psm, '-l',lang,'onlyeng']#4,6,7,8
     proc = subprocess.Popen(command,stderr=subprocess.PIPE)
     return proc
 
@@ -43,9 +43,10 @@ def subImage(img,left,right,top,bottom):
 
 def ImageToString(img, lang, psm):
     p1 = i2s(img,lang,psm)
-    p1.wait();
-    f = open('temp.txt'); rstr = f.read().strip(); f.close()
-    os.remove('temp.txt')
+    p1.wait(); time.sleep(1);
+    f = open(output_file_path+'.txt'); rstr = f.read().strip(); f.close()
+    os.remove(output_file_path+'.txt')
+    f = open(output_file_path+'.txt','w'); f.close();
     return rstr
 
 
@@ -85,7 +86,7 @@ def i2sWrapper(imgpath, lang):
     else : ans = ImageToString(img.convert('RGB'), 'eng','6').replace('',"")
     if lang == 'kor':correctGrammar(ans)
     print ''
-    return ans
+    return ans, img
 '''
 if __name__=='__main__':
     test()#main()

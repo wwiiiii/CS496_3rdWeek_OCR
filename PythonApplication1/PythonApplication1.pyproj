@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>93196a49-743a-43c1-8f3d-432d7e5664fa</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>index.py</StartupFile>
+    <StartupFile>serverMain.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -34,11 +34,9 @@
     <Compile Include="imgmodulegray.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="index.py" />
-    <Compile Include="module1.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="i2sMain.py" />
+    <Compile Include="rotation_spacing.py" />
+    <Compile Include="serverMain.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="static\css\main.css" />
@@ -47,6 +45,7 @@
     <Content Include="templates\home.html" />
     <Content Include="templates\layout.html" />
     <Content Include="templates\main.html" />
+    <Content Include="templates\noteshow.html" />
     <Content Include="templates\notescan.html" />
   </ItemGroup>
   <ItemGroup>
